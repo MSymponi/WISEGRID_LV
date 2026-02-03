@@ -1,0 +1,171 @@
+services:
+
+
+  sgs_svelte_flex:
+    container_name: iccs_eapp3_svelte
+    image: europe-southwest1-docker.pkg.dev/eid-contenedores/tec-synergies-externos/iccs_eapp3_svelte:1.0.0
+    ports:
+      - "${PUBLIC_FLEX_WEBPORT_5200}:5200"
+    environment:
+      PUBLIC_WEBHOST: ${PUBLIC_WEBHOST}
+      PUBLIC_FLEX_WEBPORT_5200: ${PUBLIC_FLEX_WEBPORT_5200}
+
+      ####################################
+      ### SECRETS @RUN (CLIENT)0
+      ##
+      SEC_FLEX_KCCLIENT: ${SEC_FLEX_KCCLIENT}
+      SEC_FLEX_KCTOKEN: ${SEC_FLEX_KCTOKEN}
+
+    depends_on:
+      - sgs_mysql
+      - sgs_redis
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+
+  sgs_nest_flex:
+    container_name: iccs_eapp3_nest
+    image: europe-southwest1-docker.pkg.dev/eid-contenedores/tec-synergies-externos/iccs_eapp3_nest:1.0.0
+    expose:
+      - "4200"
+    environment:
+      ####################################
+      ### SECRETS @RUN (CLIENT)0
+      ##
+      SEC_SULI: ${SEC_SULI}
+      SEC_SUID: ${SEC_SUID}
+      SEC_FLEX_DBURL: ${SEC_FLEX_DBURL}
+
+    depends_on:
+      - sgs_mysql
+      - sgs_redis
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+
+  sgs_cron:
+    container_name: iccs_eapp3_cron
+    image: europe-southwest1-docker.pkg.dev/eid-contenedores/tec-synergies-externos/iccs_eapp3_cron:1.0.0
+    expose:
+      - "4000"
+    environment:
+      TZ: ${ENV_CRONTZ}
+      ####################################
+      ### SECRETS @RUN (CLIENT)0
+      ##
+      SEC_SULI: ${SEC_SULI}
+      SEC_SUID: ${SEC_SUID}
+    depends_on:
+      - sgs_mysql
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+
+  sgs_flask:
+    container_name: iccs_eapp3_flask
+    image: europe-southwest1-docker.pkg.dev/eid-contenedores/tec-synergies-externos/iccs_eapp3_flask:1.0.0
+    expose:
+      - "5000"
+    environment:
+      ####################################
+      ### SECRETS @RUN (CLIENT)0
+      ##
+      SEC_SULI: ${SEC_SULI}
+      SEC_SUID: ${SEC_SUID}
+
+      SEC_DBPASS: ${SEC_DBPASS}
+      SEC_DBUSER: ${SEC_DBUSER}
+      SEC_FLEX_DBNAME: ${SEC_FLEX_DBNAME}
+
+      SEC_FLEX_FLTOK: ${SEC_FLEX_FLTOK}
+      SEC_FLEX_FLTOK_THANOS: ${SEC_FLEX_FLTOK_THANOS}
+      SEC_FLEX_FLTOK_ANDREW: ${SEC_FLEX_FLTOK_ANDREW}
+
+      SEC_FLEX_FLURL_VOLTPOST: ${SEC_FLEX_FLURL_VOLTPOST}
+      SEC_FLEX_FLURL_LINEPOST: ${SEC_FLEX_FLURL_LINEPOST}
+
+      SEC_FLEX_FLURL_FREQUENCIESLINES: ${SEC_FLEX_FLURL_FREQUENCIESLINES}
+      SEC_FLEX_FLURL_FREQUENCIESSUBLOADS: ${SEC_FLEX_FLURL_FREQUENCIESSUBLOADS}
+      SEC_FLEX_FLURL_FREQUENCIESSUBLOADS_2: ${SEC_FLEX_FLURL_FREQUENCIESSUBLOADS_2}
+
+      SEC_FLEX_FLURL_FLEXIBILITYGET: ${SEC_FLEX_FLURL_FLEXIBILITYGET}
+
+      SEC_FLEX_FLURL_MFRRVALUESGET: ${SEC_FLEX_FLURL_MFRRVALUESGET}
+      SEC_FLEX_FLURL_MFRRPRICEGET: ${SEC_FLEX_FLURL_MFRRPRICEGET}
+
+      SEC_FLEX_FLURL_GR_DAILYLOADPRED: ${SEC_FLEX_FLURL_GR_DAILYLOADPRED}
+      SEC_FLEX_FLURL_GR_WEEKLYLOADPRED: ${SEC_FLEX_FLURL_GR_WEEKLYLOADPRED}
+      SEC_FLEX_FLURL_DEN_MFRRPRICEGET_2: ${SEC_FLEX_FLURL_DEN_MFRRPRICEGET_2}
+      SEC_FLEX_FLURL_DEN_CFMSOLUTIONGET: ${SEC_FLEX_FLURL_DEN_CFMSOLUTIONGET}
+      SEC_FLEX_FLURL_GR_WEEKLYPVPRED: ${SEC_FLEX_FLURL_GR_WEEKLYPVPRED}
+      SEC_FLEX_FLURL_GR_DAILYPVPRED: ${SEC_FLEX_FLURL_GR_DAILYPVPRED}
+      SEC_FLEX_FLURL_DEN_DTUPRODS: ${SEC_FLEX_FLURL_DEN_DTUPRODS}
+      SEC_FLEX_FLURL_DEN_CONS: ${SEC_FLEX_FLURL_DEN_CONS}
+
+    depends_on:
+      - sgs_mysql
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+
+  sgs_mysql:
+    container_name: iccs_eapp3_mysql
+    image: mysql:8.0-bullseye
+    expose:
+      - "3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${SEC_DBPASS}
+    volumes:
+      - mysql_vol:/var/lib/mysql
+      - ./mysql:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+
+  sgs_redis:
+    container_name: iccs_eapp3_redis
+    image: "redis:alpine"
+    expose:
+      - "6379"
+    volumes:
+      - redis_vol:/data
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+
+
+
+volumes:
+  mysql_vol:
+    name: sgs_mysql_data_flex
+  redis_vol:
+    name: sgs_redis_data_flex
+
+
+networks:
+  default:
+    name: sgs_flex_network_flex
